@@ -4,14 +4,9 @@ Library         RPA.Browser
 Library         RPA.Browser.Selenium
 
 *** Variables ***
-#${SHOP_ID}    338236667
 ${SHOP_ID}    603028193
-#${ITEM_ID}    6963039936
-${ITEM_ID}    14224149873
-#${ITEM_ID}    0
-#${TITLE}    Eyeglasses-Retainers-Silicone-Glasses
-${TITLE}    Transtar-VTL-Land-Bus-Service-(1-Feb)-Singapore-to-Malaysia
-#${PRODUCT_VARIATION}    1 pair
+${ITEM_ID}    0
+${TITLE}    Transtar-VTL-Land-Bus-Service-(5-Feb)-Singapore-to-Malaysia
 ${PRODUCT_VARIATION}    Adult
 
 *** Keyword ***
@@ -28,7 +23,7 @@ Login
 
 *** Keyword ***
 Wait Item
-    RPA.Browser.Go To    https://shopee.sg/shop/${SHOP_ID}/search
+    RPA.Browser.Go To    https://shopee.sg/shop/${SHOP_ID}/search?page=0&sortBy=ctime
     FOR    ${i}    IN RANGE    9999999
         RPA.Browser.Wait Until Page Contains Element    //div[contains(@class, 'shop-search-result-view')]
         ${res}    RPA.Browser.Does Page Contain Element    //a[contains(@href,'${TITLE}')]
@@ -61,13 +56,39 @@ Wait Open
     RPA.Browser.Wait Until Element Is Visible    //button[text()='Place Order']
     RPA.Browser.Click Element If Visible    //button[text()='Place Order'][1]
 
+*** Keyword ***
+Wait Checkout
+    FOR    ${i}    IN RANGE    9999999
+        RPA.Browser.Go To    https://shopee.sg/cart
+        FOR    ${i}    IN RANGE    9999999
+            RPA.Browser.Set Browser Implicit Wait    1.5
+            ${res}    RPA.Browser.Does Page Contain Element    (//div[@role='main']/div)[2]//label[contains(@class,'stardust-checkbox') and not(contains(@class,'stardust-checkbox--disabled'))]
+            Exit For Loop If    ${res} == True
+            RPA.Browser.Reload Page
+        END
+        RPA.Browser.Wait Until Element Is Visible    ((//div[@role='main']/div)[2]//label[contains(@class,'stardust-checkbox') and not(contains(@class,'stardust-checkbox--disabled'))])[2]/div
+        RPA.Browser.Click Element If Visible    ((//div[@role='main']/div)[2]//label[contains(@class,'stardust-checkbox') and not(contains(@class,'stardust-checkbox--disabled'))])[2]/div
+        RPA.Browser.Wait Until Element Is Visible    //button[span[text()='check out']]
+        RPA.Browser.Click Element If Visible    //button[span[text()='check out']][1]
+        RPA.Browser.Wait Until Element Is Visible    //button[text()='PayNow']
+        RPA.Browser.Click Element If Visible    //button[text()='PayNow'][1]
+        RPA.Browser.Wait Until Element Is Visible    //button[text()='Place Order']
+        RPA.Browser.Click Element If Visible    //button[text()='Place Order'][1]
+        RPA.Browser.Set Browser Implicit Wait    5
+    END
+
 *** Tasks ***
 Minimal task
     #Login
     #Wait Until Location Is    https://shopee.sg/    300
+
     RPA.Browser.Attach Chrome Browser    9222
-    IF    ${ITEM_ID} == 0
-        Wait Item
-    END
-    Wait Open
+
+    #IF    ${ITEM_ID} == 0
+    #    Wait Until Keyword Succeeds    3x    0.5s    Wait Item
+    #END
+    #Wait Until Keyword Succeeds    3x    0.5s    Wait Open
+
+    Wait Until Keyword Succeeds    3x    0.5s    Wait Checkout
+
     Log    Done.
